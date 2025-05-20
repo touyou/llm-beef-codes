@@ -75,7 +75,7 @@ def predict_rating(book, related_reviews):
         messages=[{
             "role": "user",
             "content": prompt
-        }]
+        }],
         max_tokens=2000,
         temperature=0.7,
     )
