@@ -57,6 +57,31 @@ def retrieve_reviews(index, query, reviews, k=2):
 
     return [reviews[i] for i in indices[0]]
 
+def predict_rating(book, related_reviews):
+    reviews = "\n".join(related_reviews)
+
+    prompt = (
+        "以下はこれから読もうと考えている本です：\n" +
+        book + "\n\n" +
+        "以下は関連する過去のレビューです：\n" +
+        reviews + "\n\n" +
+        "1(最低)から5(最高)の評価で" +
+        "私がこの本を楽しめる可能性はどのくらいですか？" +
+        "説明は不要です。数字だけで回答してください。"
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{
+            "role": "user",
+            "content": prompt
+        }]
+        max_tokens=2000,
+        temperature=0.7,
+    )
+
+    return response.choices[0].message.content
+
 def main():
     index = index_reviews(reviews)
 
@@ -65,6 +90,10 @@ def main():
     related_reviews = retrieve_reviews(index, book, reviews)
 
     print(related_reviews)
+
+    result = predict_rating(book, related_reviews)
+
+    print(result)
 
 if __name__ == "__main__":
     main()
