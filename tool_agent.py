@@ -5,6 +5,7 @@ import os
 import random
 import json
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessage
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
 )
@@ -78,24 +79,42 @@ def process_messages(client, messages):
                 "content": function_response,
             })
 
-def main():
+    return messages
+
+def run_conversation(client):
+    # メッセージを初期化し、エージェントの機能を説明する序文を作成
     messages = [
         {
             "role": "system",
-            "content": "あなたはホームボーイ、陽気で役にたつホームアシスタントです。",
-        },
-        {
-            "role": "user",
-            "content": "部屋を数度暖かくしてもらえますか。"
+            "content": "あなたは、役に立つサーモスタットアシスタントです",
         }
     ]
+    while True:
+        # ユーザー入力を要求し、メッセージに追加
+        user_input = input(">> ")
+        if user_input == "":
+            break
+        messages.append({
+            "role": "user",
+            "content": user_input,
+        })
+        while True:
+            new_messages = process_messages(client, messages)
 
-    process_messages(client, messages)
-    print(messages)
-    process_messages(client, messages)
-    print(messages)
-    process_messages(client, messages)
-    print(messages)
+            last_message = new_messages[-1]
+            if not isinstance(last_message, ChatCompletionMessage):
+                continue # これは、単なるツールレスポンスメッセージ
+            if last_message.content is not None:
+                print(last_message.content)
+                #　ツール呼び出しでない場合、次のメッセージを待機
+                # ブレークし、入力を待機
+                if last_message.tool_calls is None:
+                    break
+
+    return messages
+
+def main():
+    run_conversation(client)
 
 if __name__ == "__main__":
     main()
